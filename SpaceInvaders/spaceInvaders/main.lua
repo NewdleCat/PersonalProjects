@@ -1,16 +1,21 @@
 function love.load()
     player = {}
-    player.x = 350
-    player.bullets = {}
-    player.fire = function()
-        bullet = {}
-        bullet.x = player.x + 10
-        bullet.y = 500
-        table.insert(player.bullets, bullet)
+        player.x = 350
+        player.bullets = {}
+        player.cooldown = 20
+        player.fire = function()
+            if player.cooldown <= 0 then
+                player.cooldown = 20
+                bullet = {}
+                bullet.x = player.x + 10
+                bullet.y = 500
+                table.insert(player.bullets, bullet)
+            end
+        end
     end
-end
 
 function love.update(dt)
+    player.cooldown = player.cooldown - 1
     if love.keyboard.isDown("right") then
         player.x = player.x + 1
     elseif love.keyboard.isDown("left") then
