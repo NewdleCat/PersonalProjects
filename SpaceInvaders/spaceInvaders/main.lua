@@ -7,17 +7,42 @@ enemies_controller.death_sound = love.audio.newSource('thud1.wav', "static")
 enemies_controller.moan1 = love.audio.newSource('zachMoan1.wav', "static")
 enemies_controller.moan2 = love.audio.newSource('zachMoan2.wav', "static")
 enemies_controller.moan3 = love.audio.newSource('zachMoan3.wav', "static")
-hit = false
 
+particle_system = {}
+particle_system.list = {}
+particle_system.image = love.graphics.newImage('sad.png')
 
-function love.conf(t)
-    t.console = true
+function particle_system:spawn(x, y)
+    local ps = {}
+    ps.x = x
+    ps.y = y
+    ps.ps = love.graphics.newParticleSystem(particle_system.image, 32)
+    ps.ps:setParticleLifetime(2, 4)
+    ps.ps:setEmissionRate(5)
+    ps.ps:setSizeVariation(1)
+    ps.ps:setLinearAcceleration(-20, -20, 20, 20)
+    -- ps:setColors(100, 255, 100, 255, 0, 255, 0, 255)
+    table.insert(particle_system.list, ps)
+end
+
+function particle_system:draw()
+    for _, v in pairs(particle_system.list) do
+        love.graphics.draw(v.ps, v.x, v.y)
+    end
+end
+
+function particle_system:update(dt)
+    for _, v in pairs(particle_system.list) do
+        v.ps:update(dt)
+    end
 end
 
 function checkCollisions(enemies, bullets)
     for i, e in ipairs(enemies) do
         for _, b in pairs(bullets) do
             if b.y <= e.y + e.height and b.x > e.x and b.x < e.x + e.width then
+                particle_system:spawn(e.x, e.y)
+
                 table.remove(enemies, i)
 
                 love.audio.setVolume(0.2)
@@ -38,6 +63,7 @@ end
 
 function love.load()
     game_over = false
+    game_win = false
     background_image = love.graphics.newImage('background.png')
     player = {}
     player.x = 350
@@ -76,7 +102,7 @@ function enemies_controller:spawnEnemy(x, y)
 
     enemy.bullets = {}
     enemy.cooldown = 20
-    enemy.speed = 1
+    enemy.speed = 0.1
     table.insert(self.enemies,enemy)
 end
 
@@ -94,6 +120,7 @@ end
 
 
 function love.update(dt)
+    particle_system:update(dt)
     player.cooldown = player.cooldown - 1
     if love.keyboard.isDown("right") then
         player.x = player.x + 2
@@ -105,6 +132,12 @@ function love.update(dt)
         player.fire()
     end
 
+    -- win function
+    if #enemies_controller.enemies == 0 then
+        game_win = true
+    end
+
+    --check lost
     for _,e in pairs(enemies_controller.enemies) do
         if e.y >= love.graphics.getHeight() then
             game_over = true
@@ -123,12 +156,18 @@ function love.update(dt)
 end
 
 function love.draw()
+    -- love.graphics.draw(background_image)
     if game_over == true then
         love.graphics.print("GAME OVER")
         return
+    elseif game_win == true then
+        love.graphics.print("WIIIIIIIIN")
+        -- return
     end
 
-    love.graphics.draw(background_image)
+    particle_system:draw()
+
+    -- love.graphics.print(#enemies_controller.enemies)
 
     love.graphics.setColor(0, 1, 0)
     love.graphics.rectangle("fill", player.x + 55, player.y, 2, -1000)
