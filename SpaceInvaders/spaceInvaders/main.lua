@@ -16,24 +16,40 @@ function particle_system:spawn(x, y)
     local ps = {}
     ps.x = x
     ps.y = y
+    ps.timer = 52
     ps.ps = love.graphics.newParticleSystem(particle_system.image, 32)
     ps.ps:setParticleLifetime(2, 4)
-    ps.ps:setEmissionRate(5)
-    ps.ps:setSizeVariation(1)
-    ps.ps:setLinearAcceleration(-20, -20, 20, 20)
+    ps.ps:setEmissionRate(50)
+    ps.ps:setSizes(0.3)
+    ps.ps:setLinearAcceleration(-10000, -10000, 10000, 10000)
+    ps.ps:setEmissionArea("uniform", 0, 0, 0, false)
+    -- ps.ps:setRadialAcceleration(5000)
+    ps.ps:setSpeed(10)
     -- ps:setColors(100, 255, 100, 255, 0, 255, 0, 255)
     table.insert(particle_system.list, ps)
 end
 
 function particle_system:draw()
     for _, v in pairs(particle_system.list) do
-        love.graphics.draw(v.ps, v.x, v.y)
+        love.graphics.draw(v.ps, v.x + 30, v.y + 30)
     end
 end
 
 function particle_system:update(dt)
     for _, v in pairs(particle_system.list) do
+        v.timer = v.timer - 1
+
         v.ps:update(dt)
+    end
+end
+
+function particle_system:cleaner()
+    for i, v in ipairs(particle_system.list) do
+        if v.timer <= 0 then
+            -- table.remove(particle_system.list, i)
+            v.ps:stop()
+            v.timer = 40
+        end
     end
 end
 
@@ -70,7 +86,7 @@ function love.load()
     player.y = 550
     player.speed = 8;
     player.bullets = {}
-    player.cooldown = 20
+    player.cooldown = 0
     player.fire_sound = love.audio.newSource('laser.wav', "static")
     player.image = love.graphics.newImage('P.png')
     player.fire = function()
@@ -106,21 +122,22 @@ function enemies_controller:spawnEnemy(x, y)
     table.insert(self.enemies,enemy)
 end
 
-function enemy:fire() -- simpler way to say enemy.fire(self)
-    if self.cooldown <= 0 then
-        self.cooldown = 20
-        bullet = {}
-        bullet.x = player.x + 50
-        bullet.y = player.y
-        table.insert(self.bullets, bullet)
-    end
-end
+-- function enemy:fire() -- simpler way to say enemy.fire(self)
+--     if self.cooldown <= 0 then
+--         self.cooldown = 20
+--         bullet = {}
+--         bullet.x = player.x + 50
+--         bullet.y = player.y
+--         table.insert(self.bullets, bullet)
+--     end
+-- end
 
 
 
 
 function love.update(dt)
     particle_system:update(dt)
+    particle_system:cleaner()
     player.cooldown = player.cooldown - 1
     if love.keyboard.isDown("right") then
         player.x = player.x + 2
