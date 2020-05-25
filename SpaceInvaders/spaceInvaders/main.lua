@@ -12,6 +12,24 @@ particle_system = {}
 particle_system.list = {}
 particle_system.image = love.graphics.newImage('sad.png')
 
+powerups = {}
+powerups.list = {}
+
+function powerups:spawnPowerup(x, y)
+    pup = {}
+    pup.x = x
+    pup.y = y
+    table.insert(powerups.list, pup)
+end
+
+function checkPowerupCollisions()
+    for i, p in ipairs(powerups.list) do
+        if p.y >= player.y + player.height and p.x > player.x and p.x < player.x + player.width then
+            table.remove(powerups.list, i)
+        end
+    end
+end
+
 function particle_system:spawn(x, y)
     local ps = {}
     ps.x = x
@@ -69,12 +87,15 @@ function checkCollisions(enemies, bullets)
             if b.y <= e.y + e.height and b.x > e.x and b.x < e.x + e.width then
                 particle_system:spawn(e.x, e.y)
 
+                powerups:spawnPowerup(e.x, e.y)
+
                 table.remove(enemies, i)
                 table.remove(bullets, j)
 
                 love.audio.setVolume(0.2)
 
                 love.audio.play(enemies_controller.death_sound)
+
                 -- num = love.math.random(1, 3)
                 -- if num == 1 then
                 --     love.audio.play(enemies_controller.moan1)
@@ -99,6 +120,8 @@ function love.load()
     player = {}
     player.x = 500
     player.y = 700
+    player.width = 60
+    player.height = 60
     player.speed = 8;
     player.bullets = {}
     player.cooldown = 0
@@ -206,7 +229,15 @@ function love.update(dt)
         b.y = b.y - 5
     end
 
+    for i,p in ipairs(powerups.list) do
+        if p.y > 1500 then
+            table.remove(powerups.list, i)
+        end
+        p.y = p.y + 10
+    end
+
     checkCollisions(enemies_controller.enemies, player.bullets)
+    checkPowerupCollisions()
 end
 
 function love.draw()
@@ -221,7 +252,7 @@ function love.draw()
 
     particle_system:draw()
 
-    love.graphics.print(#particle_system.list)
+    love.graphics.print(#powerups.list)
 
     love.graphics.setColor(0, 1, 0)
     love.graphics.rectangle("fill", player.x + 25, player.y, 2, -1000)
@@ -242,6 +273,11 @@ function love.draw()
     love.graphics.setColor(1, 1, 1)
     for _,e in pairs(enemies_controller.enemies) do -- ENEMY SPAWNER
         love.graphics.draw(enemies_controller.image, e.x, e.y, 0, 1)
+    end
+
+    love.graphics.setColor(0, 1, 0)
+    for _,p in pairs(powerups.list) do
+        love.graphics.rectangle("fill", p.x + 30, p.y + 30, 10, 10)
     end
 
 end
