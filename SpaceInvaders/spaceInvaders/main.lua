@@ -22,22 +22,12 @@ function powerups:spawnPowerup(x, y)
     table.insert(powerups.list, pup)
 end
 
-function checkPowerupCollisions()
-    for i, p in ipairs(powerups.list) do
-        if p.y >= player.y and p.y <= player.y + player.height and p.x >= player.x and p.x <= player.x + player.width then
-            table.remove(powerups.list, i)
-            player.shootMode = "double"
-            player.powerupCooldown = 200
-        end
-    end
-end
-
 function particle_system:spawn(x, y)
     local ps = {}
     ps.x = x
     ps.y = y
     ps.stopped = false
-    ps.timer = 45
+    ps.timer = 100
     ps.delete_timer = 200
     ps.ps = love.graphics.newParticleSystem(particle_system.image, 32)
     ps.ps:setParticleLifetime(0.18, 0.18)
@@ -48,7 +38,7 @@ function particle_system:spawn(x, y)
     -- ps.ps:setEmissionArea("uniform", 0, 0, 0, false)
     -- ps.ps:setRadialAcceleration(5000)
     ps.ps:setSpeed(10)
-    -- ps:setColors(100, 255, 100, 255, 0, 255, 0, 255)
+    ps.ps:setColors(1, 1, 1, 1)
     -- ps.ps:setSpread(10)
     ps.ps:setAreaSpread("uniform", 10, 10)
     table.insert(particle_system.list, ps)
@@ -88,13 +78,33 @@ function particle_system:cleaner()
     end
 end
 
+function enemies_controller:spawnEnemy(x, y)
+    enemy = {}
+    enemy.x = x
+    enemy.y = y
+
+    enemy.width = 60
+    enemy.height = 60
+
+    enemy.bullets = {}
+    enemy.cooldown = 20
+    enemy.speed = 0.2
+    table.insert(self.enemies,enemy)
+end
+
+------------------------------------------------------------------------------------
+--                          COLLISIONS
+------------------------------------------------------------------------------------
+
 function checkCollisions(enemies, bullets)
     for i, e in ipairs(enemies) do
         for j, b in ipairs(bullets) do
             if b.y <= e.y + e.height and b.x > e.x and b.x < e.x + e.width then
                 particle_system:spawn(e.x, e.y)
 
-                powerups:spawnPowerup(e.x, e.y)
+                powerups:spawnPowerup(e.x + e.width/2, e.y + e.height/2)
+
+                temp = e.x
 
                 table.remove(enemies, i)
                 table.remove(bullets, j)
@@ -116,8 +126,22 @@ function checkCollisions(enemies, bullets)
     end
 end
 
+function checkPowerupCollisions()
+    for i, p in ipairs(powerups.list) do
+        if p.y >= player.y and p.y <= player.y + player.height and p.x > player.x and p.x < player.x + player.width then
+            table.remove(powerups.list, i)
+            player.shootMode = "double"
+            player.powerupCooldown = 2000
+        end
+    end
+end
+------------------------------------------------------------------------------------
+--                          MAIN FUNCTIONS
+------------------------------------------------------------------------------------
 function love.load()
     love.window.setMode(1024,768)
+
+    temp = 0
 
     game_over = false
     game_win = false
@@ -154,20 +178,6 @@ function love.load()
 
 end
 
-function enemies_controller:spawnEnemy(x, y)
-    enemy = {}
-    enemy.x = x
-    enemy.y = y
-
-    enemy.width = 60
-    enemy.height = 60
-
-    enemy.bullets = {}
-    enemy.cooldown = 20
-    enemy.speed = 0.2
-    table.insert(self.enemies,enemy)
-end
-
 function love.update(dt)
     particle_system:update(dt)
     particle_system:cleaner()
@@ -198,7 +208,10 @@ function love.update(dt)
         elseif enemy_go_left == true then
             e.x = e.x - 1 * e.speed
         end
+    end
 
+    -- ENEMY MOVEMENT
+    for _,e in pairs(enemies_controller.enemies) do
         if e.x + e.width >= 1014 then
             enemy_go_right = false
             enemy_go_left = true
@@ -214,6 +227,7 @@ function love.update(dt)
         end
     end
 
+    -- BULLETS
     for i,b in ipairs(player.bullets) do
         if b.y < -10 then
             table.remove(player.bullets, i)
@@ -221,6 +235,7 @@ function love.update(dt)
         b.y = b.y - 5
     end
 
+    -- POWERUPS
     for i,p in ipairs(powerups.list) do
         if p.y > player.y + 100 then
             table.remove(powerups.list, i)
@@ -252,7 +267,15 @@ function love.draw()
 
     particle_system:draw()
 
-    love.graphics.print(player.powerupCooldown, 100, 100)
+    -- love.graphics.print("Player:", 150, 400)
+    -- love.graphics.print(player.x, 200, 400)
+    -- love.graphics.print("Powerup:", 150, 430)
+    -- love.graphics.print(temp, 220, 430)
+
+    -- love.graphics.rectangle("fill", 500, 0, 2, 1000)
+
+    -- love.graphics.print(player.powerupCooldown, player.x - 80, player.y - 30)
+    love.graphics.print(math.floor(player.powerupCooldown/100), player.x - 80, player.y - 30)
 
     love.graphics.setColor(0, 1, 0)
     love.graphics.rectangle("fill", player.x + 25, player.y, 2, -1000)
@@ -267,8 +290,8 @@ function love.draw()
     end
 
     --PLAYER SPAWN
-    love.graphics.rectangle("fill", player.x, player.y, 2, 2)
-    -- love.graphics.draw(player.image, player.x, player.y, 0, 1)
+    -- love.graphics.rectangle("fill", player.x, player.y, 2, 2)
+    love.graphics.draw(player.image, player.x, player.y, 0, 1)
 
     love.graphics.setColor(1, 1, 1)
     for _,e in pairs(enemies_controller.enemies) do -- ENEMY SPAWNER
@@ -277,7 +300,8 @@ function love.draw()
 
     love.graphics.setColor(0, 1, 0)
     for _,p in pairs(powerups.list) do
-        love.graphics.rectangle("fill", p.x + 30, p.y + 30, 10, 10)
+        love.graphics.rectangle("fill", p.x, p.y, 10, 10)
     end
 
+    love.graphics.setColor(1, 1, 1)
 end
