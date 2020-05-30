@@ -1,16 +1,8 @@
-love.graphics.setDefaultFilter('nearest', 'nearest')
-enemy = {}
-enemies_controller = {}
-enemies_controller.enemies = {}
-enemies_controller.image = love.graphics.newImage('sad.png')
-enemies_controller.death_sound = love.audio.newSource('thud1.wav', "static")
-enemies_controller.moan1 = love.audio.newSource('zachMoan1.wav', "static")
-enemies_controller.moan2 = love.audio.newSource('zachMoan2.wav', "static")
-enemies_controller.moan3 = love.audio.newSource('zachMoan3.wav', "static")
+require "particles"
+require "enemy"
+require "player"
 
-particle_system = {}
-particle_system.list = {}
-particle_system.image = love.graphics.newImage('sad.png')
+love.graphics.setDefaultFilter('nearest', 'nearest')
 
 powerups = {}
 powerups.list = {}
@@ -22,75 +14,6 @@ function powerups:spawnPowerup(x, y)
     table.insert(powerups.list, pup)
 end
 
-function particle_system:spawn(x, y)
-    local ps = {}
-    ps.x = x
-    ps.y = y
-    ps.stopped = false
-    ps.timer = 100
-    ps.delete_timer = 200
-    ps.ps = love.graphics.newParticleSystem(particle_system.image, 32)
-    ps.ps:setParticleLifetime(0.18, 0.18)
-    -- ps.ps:setParticleLifetime(1, 1)
-    ps.ps:setEmissionRate(30)
-    ps.ps:setSizes(0.3)
-    ps.ps:setLinearAcceleration(-10000, -10000, 10000, 10000)
-    -- ps.ps:setEmissionArea("uniform", 0, 0, 0, false)
-    -- ps.ps:setRadialAcceleration(5000)
-    ps.ps:setSpeed(10)
-    ps.ps:setColors(1, 1, 1, 1)
-    -- ps.ps:setSpread(10)
-    ps.ps:setAreaSpread("uniform", 10, 10)
-    table.insert(particle_system.list, ps)
-    table.insert(particle_system.list, ps)
-    table.insert(particle_system.list, ps)
-end
-
-function particle_system:draw()
-    for _, v in pairs(particle_system.list) do
-        love.graphics.draw(v.ps, v.x + 30, v.y + 30)
-    end
-end
-
-function particle_system:update(dt)
-    for _, v in pairs(particle_system.list) do
-        v.timer = v.timer - 1
-
-        if v.timer <= 0 then
-            v.delete_timer = v.delete_timer - 1
-        end
-
-        v.ps:update(dt)
-    end
-end
-
-function particle_system:cleaner()
-    for i, v in ipairs(particle_system.list) do
-        if v.timer <= 0 then
-            -- table.remove(particle_system.list, i)
-            -- v.ps:setSpeed(10)
-            v.ps:stop()
-        end
-
-        if v.delete_timer <= 0 then
-            table.remove(particle_system.list, i)
-        end
-    end
-end
-
-function enemies_controller:spawnEnemy(x, y)
-    enemy = {}
-    enemy.x = x
-    enemy.y = y
-
-    enemy.width = 60
-    enemy.height = 60
-
-    enemy.bullets = {}
-    enemy.cooldown = 20
-    enemy.speed = 0.2
-    table.insert(self.enemies,enemy)
-end
 
 ------------------------------------------------------------------------------------
 --                          COLLISIONS
@@ -141,41 +64,29 @@ end
 function love.load()
     love.window.setMode(1024,768)
 
-    temp = 0
+    pos = 0
+    wave = 0
+    temp = false
 
     game_over = false
     game_win = false
     enemy_go_left = false
     enemy_go_right = true
-    background_image = love.graphics.newImage('background.png')
-    player = {}
-    player.x = 500
-    player.y = 700
-    player.width = 60
-    player.height = 60
-    player.speed = 8
-    player.shootMode = "normal"
-    player.powerupCooldown = 0
-    player.bullets = {}
-    player.cooldown = 0
-    player.fire_sound = love.audio.newSource('laser.wav', "static")
-    player.image = love.graphics.newImage('P.png')
-    player.fire = function()
-        if player.cooldown <= 0 then
-            love.audio.play(player.fire_sound)
-            player.cooldown = 60
-            bullet = {}
-            bullet.x = player.x + 21
-            bullet.y = player.y
-            table.insert(player.bullets, bullet)
-        end
-    end
 
-    for i=0, 10, 1 do
-        enemies_controller:spawnEnemy((i * 70) + 30, 100)
-        enemies_controller:spawnEnemy((i * 70) + 30, 170)
-    end
+    gameLevel = 1
 
+    background_image = love.graphics.newImage('images/background.png')
+
+    enemies_controller.image = love.graphics.newImage('images/sad.png')
+    enemies_controller.death_sound = love.audio.newSource('sounds/thud1.wav', "static")
+    enemies_controller.moan1 = love.audio.newSource('sounds/zachMoan1.wav', "static")
+    enemies_controller.moan2 = love.audio.newSource('sounds/zachMoan2.wav', "static")
+    enemies_controller.moan3 = love.audio.newSource('sounds/zachMoan3.wav', "static")
+
+    particle_system.image = love.graphics.newImage('images/sad.png')
+
+    player.fire_sound = love.audio.newSource('sounds/laser.wav', "static")
+    player.image = love.graphics.newImage('images/P.png')
 end
 
 function love.update(dt)
@@ -189,12 +100,27 @@ function love.update(dt)
     end
 
     if love.keyboard.isDown("a") then
-        player.fire()
+        playerFire()
     end
 
+    --Enemy Spawning
+    -- spawnLevel(gameLevel)
+    pos = pos + 100*dt
+    wave = pos + 100*dt
+
+    -- ENEMY MOVEMENT
+    -- enemyMovement() -- enemy.lua
+
     -- win function
-    if #enemies_controller.enemies == 0 then
+    if level == 3 then
         game_win = true
+    end
+
+    if #enemies_controller.enemies == 0 then
+        gameLevel = gameLevel + 1
+        have_spawned = false
+        enemy_go_left = false
+        enemy_go_right = true
     end
 
     --check lost
@@ -207,23 +133,6 @@ function love.update(dt)
             e.x = e.x + 1 * e.speed
         elseif enemy_go_left == true then
             e.x = e.x - 1 * e.speed
-        end
-    end
-
-    -- ENEMY MOVEMENT
-    for _,e in pairs(enemies_controller.enemies) do
-        if e.x + e.width >= 1014 then
-            enemy_go_right = false
-            enemy_go_left = true
-            for _,e in pairs(enemies_controller.enemies) do
-                e.y = e.y + 20
-            end
-        elseif e.x <= 10 then
-            enemy_go_right = true
-            enemy_go_left = false
-            for _,e in pairs(enemies_controller.enemies) do
-                e.y = e.y + 20
-            end
         end
     end
 
@@ -251,6 +160,7 @@ function love.update(dt)
         player.shootMode = "normal"
     end
 
+    -- COLLISIONS
     checkCollisions(enemies_controller.enemies, player.bullets)
     checkPowerupCollisions(dt)
 end
@@ -271,8 +181,12 @@ function love.draw()
     -- love.graphics.print(player.x, 200, 400)
     -- love.graphics.print("Powerup:", 150, 430)
     -- love.graphics.print(temp, 220, 430)
-
+    love.graphics.print(#enemies_controller.enemies, 100, 100)
     -- love.graphics.rectangle("fill", 500, 0, 2, 1000)
+
+    love.graphics.rectangle("fill", 200 + math.cos((wave/100) - 200)*100, 200 + math.sin((wave/100) - 200)*100, 10, 10)
+    love.graphics.setColor(1, 0, 0)
+    love.graphics.rectangle("fill", 200 + math.cos((wave/100))*100, 200 + math.sin((wave/100))*100, 10, 10)
 
     -- love.graphics.print(player.powerupCooldown, player.x - 80, player.y - 30)
     love.graphics.print(math.floor(player.powerupCooldown/100), player.x - 80, player.y - 30)
