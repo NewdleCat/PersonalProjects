@@ -28,6 +28,16 @@ function enemyBullets:enemyFire(x, y)
     table.insert(enemyBullets.list, pup)
 end
 
+function enemyBullets:bulletController()
+    -- num = love.math.random(1, 3)
+
+    for _,e in pairs(enemies_controller.enemies) do
+        
+    end
+
+    -- enemyBullets:enemyFire(e.x + e.width/2, e.y + e.height/2)
+end
+
 function enemies_controller:spawnEnemy(x, y, ival)
     enemy = {}
     enemy.x = x
@@ -40,7 +50,7 @@ function enemies_controller:spawnEnemy(x, y, ival)
     enemy.height = 60
 
     enemy.bullets = {}
-    enemy.cooldown = 20
+    enemy.cooldown = 60
     enemy.speed = 0.2
     table.insert(self.enemies,enemy)
 end

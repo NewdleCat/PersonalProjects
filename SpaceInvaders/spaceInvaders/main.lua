@@ -4,16 +4,6 @@ require "player"
 
 love.graphics.setDefaultFilter('nearest', 'nearest')
 
--- powerups = {}
--- powerups.list = {}
-
--- function powerups:enemyFire(x, y)
---     pup = {}
---     pup.x = x
---     pup.y = y
---     table.insert(powerups.list, pup)
--- end
-
 
 ------------------------------------------------------------------------------------
 --                          COLLISIONS
@@ -54,8 +44,7 @@ function checkPowerupCollisions()
     for i, p in ipairs(enemyBullets.list) do
         if p.y >= player.y and p.y <= player.y + player.height and p.x > player.x and p.x < player.x + player.width then
             table.remove(enemyBullets.list, i)
-            player.shootMode = "double"
-            player.powerupCooldown = 2000
+
             player.lives = player.lives - 1
         end
     end
@@ -74,6 +63,7 @@ function love.load()
     game_win = false
     enemy_go_left = false
     enemy_go_right = true
+    enemy_fire_pause = 20
 
     gameLevel = 1
 
@@ -132,6 +122,10 @@ function love.update(dt)
         end
     end
 
+    -- if player.lives == 0 then
+    --     game_over = true
+    -- end
+
     -- BULLETS
     for i,b in ipairs(player.bullets) do
         if b.y < -10 then
@@ -148,17 +142,16 @@ function love.update(dt)
         p.y = p.y + 2
     end
 
-    if player.shootMode == "double" and player.powerupCooldown > 0 then
-        player.powerupCooldown = player.powerupCooldown - 1
-    end
-
-    if player.powerupCooldown < 0 then
-        player.shootMode = "normal"
-    end
-
     -- COLLISIONS
     checkCollisions(enemies_controller.enemies, player.bullets)
     checkPowerupCollisions(dt)
+
+    if enemy_fire_pause == 0 then
+        enemyBullets:bulletController()
+        enemy_fire_pause = 20
+    else
+        enemy_fire_pause = enemy_fire_pause - 1 
+    end
 end
 
 function love.draw()
@@ -185,11 +178,11 @@ function love.draw()
     -- end
 
     -- love.graphics.rectangle("fill", 200 + math.cos((wave/100))*100, 200 + math.sin((wave/100))*100, 10, 10)
-    love.graphics.rectangle("fill", 200 + math.cos((wave/100))*100, 200 + math.sin((wave/100))*100, 10, 10)
-    love.graphics.setColor(1, 0, 0)
-    love.graphics.rectangle("fill", 200 + math.cos((wave/100) - 200)*100, 200 + math.sin((wave/100) - 200)*100, 10, 10)
-    love.graphics.setColor(0, 1, 0)
-    love.graphics.rectangle("fill", 200 + math.cos((wave/100) - 400)*100, 200 + math.sin((wave/100) - 400)*100, 10, 10)
+    -- love.graphics.rectangle("fill", 200 + math.cos((wave/100))*100, 200 + math.sin((wave/100))*100, 10, 10)
+    -- love.graphics.setColor(1, 0, 0)
+    -- love.graphics.rectangle("fill", 200 + math.cos((wave/100) - 200)*100, 200 + math.sin((wave/100) - 200)*100, 10, 10)
+    -- love.graphics.setColor(0, 1, 0)
+    -- love.graphics.rectangle("fill", 200 + math.cos((wave/100) - 400)*100, 200 + math.sin((wave/100) - 400)*100, 10, 10)
     -- love.graphics.setColor(1, 0, 0)
 
     -- for i = 0, 10 do
@@ -222,7 +215,7 @@ function love.draw()
         love.graphics.draw(enemies_controller.image, e.x, e.y, 0, 1)
     end
 
-    love.graphics.setColor(0, 1, 0)
+    love.graphics.setColor(1, 0, 0)
     for _,p in pairs(enemyBullets.list) do
         love.graphics.rectangle("fill", p.x, p.y, 10, 10)
     end
