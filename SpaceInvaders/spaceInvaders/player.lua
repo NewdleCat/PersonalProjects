@@ -8,6 +8,8 @@ player.shootMode = "normal"
 player.powerupCooldown = 0
 player.bullets = {}
 player.cooldown = 0
+player.lives = 3
+
 
 function playerFire()
     if player.cooldown <= 0 then

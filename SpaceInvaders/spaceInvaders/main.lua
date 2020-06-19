@@ -4,15 +4,15 @@ require "player"
 
 love.graphics.setDefaultFilter('nearest', 'nearest')
 
-powerups = {}
-powerups.list = {}
+-- powerups = {}
+-- powerups.list = {}
 
-function powerups:spawnPowerup(x, y)
-    pup = {}
-    pup.x = x
-    pup.y = y
-    table.insert(powerups.list, pup)
-end
+-- function powerups:enemyFire(x, y)
+--     pup = {}
+--     pup.x = x
+--     pup.y = y
+--     table.insert(powerups.list, pup)
+-- end
 
 
 ------------------------------------------------------------------------------------
@@ -22,10 +22,11 @@ end
 function checkCollisions(enemies, bullets)
     for i, e in ipairs(enemies) do
         for j, b in ipairs(bullets) do
-            if b.y <= e.y + e.height and b.x > e.x and b.x < e.x + e.width then
+            if b.y > e.y and b.y <= e.y + e.height and b.x > e.x and b.x < e.x + e.width then
+            -- if b.y <= e.y + e.height and b.x > e.x and b.x < e.x + e.width then
                 particle_system:spawn(e.x, e.y)
 
-                powerups:spawnPowerup(e.x + e.width/2, e.y + e.height/2)
+                enemyBullets:enemyFire(e.x + e.width/2, e.y + e.height/2)
 
                 temp = e.x
 
@@ -50,11 +51,12 @@ function checkCollisions(enemies, bullets)
 end
 
 function checkPowerupCollisions()
-    for i, p in ipairs(powerups.list) do
+    for i, p in ipairs(enemyBullets.list) do
         if p.y >= player.y and p.y <= player.y + player.height and p.x > player.x and p.x < player.x + player.width then
-            table.remove(powerups.list, i)
+            table.remove(enemyBullets.list, i)
             player.shootMode = "double"
             player.powerupCooldown = 2000
+            player.lives = player.lives - 1
         end
     end
 end
@@ -104,15 +106,15 @@ function love.update(dt)
     end
 
     --Enemy Spawning
-    -- spawnLevel(gameLevel)
+    spawnLevel(gameLevel, wave)
     pos = pos + 100*dt
     wave = pos + 100*dt
 
     -- ENEMY MOVEMENT
-    -- enemyMovement() -- enemy.lua
+    enemyMovement(wave, gameLevel) -- enemy.lua
 
     -- win function
-    if level == 3 then
+    if gameLevel == 3 then
         game_win = true
     end
 
@@ -128,12 +130,6 @@ function love.update(dt)
         if e.y >= love.graphics.getHeight() then
             game_over = true
         end
-
-        if enemy_go_right == true then
-            e.x = e.x + 1 * e.speed
-        elseif enemy_go_left == true then
-            e.x = e.x - 1 * e.speed
-        end
     end
 
     -- BULLETS
@@ -145,9 +141,9 @@ function love.update(dt)
     end
 
     -- POWERUPS
-    for i,p in ipairs(powerups.list) do
+    for i,p in ipairs(enemyBullets.list) do
         if p.y > player.y + 100 then
-            table.remove(powerups.list, i)
+            table.remove(enemyBullets.list, i)
         end
         p.y = p.y + 2
     end
@@ -184,12 +180,26 @@ function love.draw()
     love.graphics.print(#enemies_controller.enemies, 100, 100)
     -- love.graphics.rectangle("fill", 500, 0, 2, 1000)
 
-    love.graphics.rectangle("fill", 200 + math.cos((wave/100) - 200)*100, 200 + math.sin((wave/100) - 200)*100, 10, 10)
-    love.graphics.setColor(1, 0, 0)
+    -- for i = 0, 200, 100 do
+    --     love.graphics.rectangle("fill", 200 + math.cos((i/100))*100, 200 + math.sin((i/100))*100, 10, 10)
+    -- end
+
+    -- love.graphics.rectangle("fill", 200 + math.cos((wave/100))*100, 200 + math.sin((wave/100))*100, 10, 10)
     love.graphics.rectangle("fill", 200 + math.cos((wave/100))*100, 200 + math.sin((wave/100))*100, 10, 10)
+    love.graphics.setColor(1, 0, 0)
+    love.graphics.rectangle("fill", 200 + math.cos((wave/100) - 200)*100, 200 + math.sin((wave/100) - 200)*100, 10, 10)
+    love.graphics.setColor(0, 1, 0)
+    love.graphics.rectangle("fill", 200 + math.cos((wave/100) - 400)*100, 200 + math.sin((wave/100) - 400)*100, 10, 10)
+    -- love.graphics.setColor(1, 0, 0)
+
+    -- for i = 0, 10 do
+    --     i = i + 100*i
+    --     i = i + 100*i
+    --     love.graphics.rectangle("fill", 200 + math.cos((i/100))*100, 200 + math.sin((i/100))*100, 10, 10)
+    -- end
 
     -- love.graphics.print(player.powerupCooldown, player.x - 80, player.y - 30)
-    love.graphics.print(math.floor(player.powerupCooldown/100), player.x - 80, player.y - 30)
+    love.graphics.print(player.lives, player.x - 80, player.y - 30)
 
     love.graphics.setColor(0, 1, 0)
     love.graphics.rectangle("fill", player.x + 25, player.y, 2, -1000)
@@ -213,7 +223,7 @@ function love.draw()
     end
 
     love.graphics.setColor(0, 1, 0)
-    for _,p in pairs(powerups.list) do
+    for _,p in pairs(enemyBullets.list) do
         love.graphics.rectangle("fill", p.x, p.y, 10, 10)
     end
 
