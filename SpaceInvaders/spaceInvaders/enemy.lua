@@ -20,22 +20,27 @@ have_spawned = false
 --     table.insert(self.enemies,enemy)
 -- end
 
+function lerp(a,b,t) 
+    return a * (1-t) + b * t 
+end
+
+function quadin(a, b, t) 
+    return lerp(a, b, t * t) 
+end
+
+function quad_in_out(a, b, t)
+    if t <= 0.5 then
+        return quadin(a, b, t*2) - (b-a)/2 -- scale by 2/0.5
+    else
+        return quadin(a, b, (1 - t)*2) + (b-a)/2 -- reverse and offset by 0.5
+    end
+end
 
 function enemyBullets:enemyFire(x, y)
     pup = {}
     pup.x = x
     pup.y = y
     table.insert(enemyBullets.list, pup)
-end
-
-function enemyBullets:bulletController()
-    -- num = love.math.random(1, 3)
-
-    for _,e in pairs(enemies_controller.enemies) do
-        
-    end
-
-    -- enemyBullets:enemyFire(e.x + e.width/2, e.y + e.height/2)
 end
 
 function enemies_controller:spawnEnemy(x, y, ival)
@@ -48,11 +53,21 @@ function enemies_controller:spawnEnemy(x, y, ival)
 
     enemy.width = 60
     enemy.height = 60
+    enemy.cooldown = 1000
 
     enemy.bullets = {}
-    enemy.cooldown = 60
     enemy.speed = 0.2
     table.insert(self.enemies,enemy)
+end
+
+function enemies_controller:clearEnemies()
+
+    while (#enemies_controller.enemies ~= 0) do
+        for i,e in pairs(enemies_controller.enemies) do
+            table.remove(enemies_controller.enemies, i)
+        end
+    end
+
 end
 
 function enemyMovement(wave, gameLevel)
@@ -89,14 +104,28 @@ function enemyMovement(wave, gameLevel)
     end
 end
 
+function moveEnemiesDown()
+    for _,e in pairs (enemies_controller.enemies) do
+        for i = 0, 400, 1 do
+            if e.y < 200 then
+                e.y = quad_in_out(e.y, e.y + 2, 0.5)
+
+            end
+
+
+        end
+    end
+end
+
 function spawnLevel(gameLevel, wave)
 
     if gameLevel == 1 and have_spawned == false then
-        enemies_controller:spawnEnemy(400, 400, 0)
-        -- for i=0, 10, 1 do
-        --     enemies_controller:spawnEnemy((i * 70) + 30, 100)
-        --     enemies_controller:spawnEnemy((i * 70) + 30, 170)
-        -- end
+        -- enemies_controller:spawnEnemy(400, 400, 0)
+
+        for i=0, 10, 1 do
+            enemies_controller:spawnEnemy((i * 70) + 30, 100)
+            enemies_controller:spawnEnemy((i * 70) + 30, 170)
+        end
         have_spawned = true
     elseif gameLevel == 2 and have_spawned == false then
         -- for i = 0, 10 do

@@ -4,6 +4,24 @@ require "player"
 
 love.graphics.setDefaultFilter('nearest', 'nearest')
 
+------------------------------------------------------------------------------------
+--                          OTHER STUFF
+------------------------------------------------------------------------------------
+function lerp(a,b,t) 
+    return a * (1-t) + b * t 
+end
+
+function quadin(a, b, t) 
+    return lerp(a, b, t * t) 
+end
+
+function quad_in_out(a, b, t)
+    if t <= 0.5 then
+        return quadin(a, b, t*2) - (b-a)/2 -- scale by 2/0.5
+    else
+        return quadin(a, b, (1 - t)*2) + (b-a)/2 -- reverse and offset by 0.5
+    end
+end
 
 ------------------------------------------------------------------------------------
 --                          COLLISIONS
@@ -61,13 +79,20 @@ function love.load()
 
     game_over = false
     game_win = false
+    display_level_image = true
     enemy_go_left = false
     enemy_go_right = true
     enemy_fire_pause = 20
 
+    key_buffer = false
+
     gameLevel = 1
 
     background_image = love.graphics.newImage('images/background.png')
+    gameover_image = love.graphics.newImage('images/gameover.png')
+    level1_image = love.graphics.newImage('images/level1.png')
+    level2_image = love.graphics.newImage('images/level2.png')
+    win_image = love.graphics.newImage('images/win.png')
 
     enemies_controller.image = love.graphics.newImage('images/sad.png')
     enemies_controller.death_sound = love.audio.newSource('sounds/thud1.wav', "static")
@@ -85,6 +110,7 @@ function love.update(dt)
     particle_system:update(dt)
     particle_system:cleaner()
     player.cooldown = player.cooldown - 1
+    
     if love.keyboard.isDown("right") then
         player.x = player.x + 2
     elseif love.keyboard.isDown("left") then
@@ -96,7 +122,8 @@ function love.update(dt)
     end
 
     --Enemy Spawning
-    spawnLevel(gameLevel, wave)
+    -- spawnLevel(gameLevel, wave)
+    -- moveEnemiesDown()
     pos = pos + 100*dt
     wave = pos + 100*dt
 
@@ -105,14 +132,25 @@ function love.update(dt)
 
     -- win function
     if gameLevel == 3 then
+        -- gameLevel = 0
         game_win = true
     end
 
-    if #enemies_controller.enemies == 0 then
+    if gameLevel == 1 and love.keyboard.isDown("space") and key_buffer == false then
+        display_level_image = false
+        spawnLevel(gameLevel, wave)
+    elseif gameLevel == 2 and love.keyboard.isDown("space") then
+        display_level_image = false
+        spawnLevel(gameLevel, wave)
+    end
+
+
+    if #enemies_controller.enemies == 0 and display_level_image == false and game_over == false then
         gameLevel = gameLevel + 1
         have_spawned = false
         enemy_go_left = false
         enemy_go_right = true
+        display_level_image = true
     end
 
     --check lost
@@ -122,9 +160,9 @@ function love.update(dt)
         end
     end
 
-    -- if player.lives == 0 then
-    --     game_over = true
-    -- end
+    if player.lives == 0 then
+        game_over = true
+    end
 
     -- BULLETS
     for i,b in ipairs(player.bullets) do
@@ -146,52 +184,63 @@ function love.update(dt)
     checkCollisions(enemies_controller.enemies, player.bullets)
     checkPowerupCollisions(dt)
 
-    if enemy_fire_pause == 0 then
-        enemyBullets:bulletController()
-        enemy_fire_pause = 20
-    else
-        enemy_fire_pause = enemy_fire_pause - 1 
+
+    for _,e in pairs(enemies_controller.enemies) do
+        num = love.math.random(1, 500)
+        if num == 5 and e.cooldown < 0 then
+            enemyBullets:enemyFire(e.x + e.width/2, e.y + e.height/2)
+            e.cooldown = 800
+        end
+        e.cooldown = e.cooldown - 1
     end
+
+    --GAME RESET
+    if game_over == true then
+        enemies_controller:clearEnemies()
+        if love.keyboard.isDown("space") then
+            enemies_controller:clearEnemies()
+            -- enemies_controller:clearEnemies()
+            gameLevel = 1
+            have_spawned = false
+            game_over = false
+            player.lives = 3
+            enemy_go_left = false
+            enemy_go_right = true
+            display_level_image = true
+            -- spawnLevel(gameLevel, wave)
+        end
+    end
+
+    if love.keyboard.isDown("space") then
+        key_buffer = true
+    else
+        key_buffer = false
+    end
+
 end
 
 function love.draw()
     -- love.graphics.draw(background_image)
     if game_over == true then
-        love.graphics.print("GAME OVER", 150, 300, 0, 10)
-        return
+        -- love.graphics.print("GAME OVER", 150, 300, 0, 10)
+        love.graphics.draw(gameover_image)
+        -- return
     elseif game_win == true then
-        love.graphics.print("WIIIIIIIIN")
+        -- love.graphics.print("WIIIIIIIIN")
+        love.graphics.draw(win_image)
         -- return
     end
 
-    particle_system:draw()
+    if gameLevel == 1 and display_level_image == true then
+        love.graphics.draw(level1_image)
+    elseif gameLevel == 2 and display_level_image == true then
+        love.graphics.draw(level2_image)
+    end
 
-    -- love.graphics.print("Player:", 150, 400)
-    -- love.graphics.print(player.x, 200, 400)
-    -- love.graphics.print("Powerup:", 150, 430)
-    -- love.graphics.print(temp, 220, 430)
     love.graphics.print(#enemies_controller.enemies, 100, 100)
-    -- love.graphics.rectangle("fill", 500, 0, 2, 1000)
 
-    -- for i = 0, 200, 100 do
-    --     love.graphics.rectangle("fill", 200 + math.cos((i/100))*100, 200 + math.sin((i/100))*100, 10, 10)
-    -- end
+    particle_system:draw() -- PARTICLE SYSTEM
 
-    -- love.graphics.rectangle("fill", 200 + math.cos((wave/100))*100, 200 + math.sin((wave/100))*100, 10, 10)
-    -- love.graphics.rectangle("fill", 200 + math.cos((wave/100))*100, 200 + math.sin((wave/100))*100, 10, 10)
-    -- love.graphics.setColor(1, 0, 0)
-    -- love.graphics.rectangle("fill", 200 + math.cos((wave/100) - 200)*100, 200 + math.sin((wave/100) - 200)*100, 10, 10)
-    -- love.graphics.setColor(0, 1, 0)
-    -- love.graphics.rectangle("fill", 200 + math.cos((wave/100) - 400)*100, 200 + math.sin((wave/100) - 400)*100, 10, 10)
-    -- love.graphics.setColor(1, 0, 0)
-
-    -- for i = 0, 10 do
-    --     i = i + 100*i
-    --     i = i + 100*i
-    --     love.graphics.rectangle("fill", 200 + math.cos((i/100))*100, 200 + math.sin((i/100))*100, 10, 10)
-    -- end
-
-    -- love.graphics.print(player.powerupCooldown, player.x - 80, player.y - 30)
     love.graphics.print(player.lives, player.x - 80, player.y - 30)
 
     love.graphics.setColor(0, 1, 0)
