@@ -43,16 +43,16 @@ function checkCollisions(enemies, bullets)
 
                 love.audio.setVolume(0.2)
 
-                love.audio.play(enemies_controller.death_sound)
+                -- love.audio.play(enemies_controller.death_sound)
 
-                -- num = love.math.random(1, 3)
-                -- if num == 1 then
-                --     love.audio.play(enemies_controller.moan1)
-                -- elseif num == 2 then
-                --     love.audio.play(enemies_controller.moan2)
-                -- elseif num ==3 then
-                --     love.audio.play(enemies_controller.moan3)
-                -- end
+                num = love.math.random(1, 3)
+                if num == 1 then
+                    love.audio.play(enemies_controller.moan1)
+                elseif num == 2 then
+                    love.audio.play(enemies_controller.moan2)
+                elseif num ==3 then
+                    love.audio.play(enemies_controller.moan3)
+                end
             end
         end
     end
