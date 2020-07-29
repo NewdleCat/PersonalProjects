@@ -3,7 +3,6 @@ def main():
 	totalBill = float(input("Enter Total Bill: $"))
 
 	bill = {}
-	bill["unsorted"] = totalBill
 	userInput = ""
 	while userInput != "e":
 		printMenu()
@@ -11,26 +10,14 @@ def main():
 
 		if userInput == "n":
 			name = input("Enter section name: ")
-			bill[name] = 0
-			inputAmount = 1
-			while inputAmount != 0:
-				# printMenu()
-				inputAmount = float(input("Enter your amount (0 for exit): "))
-
-				if isinstance(inputAmount, int) == False and isinstance(inputAmount, float) == False:
-					print("\n WRONG INPUT")
-					continue
-
-				if inputAmount != 0:
-					bill[name] += inputAmount
-					bill["unsorted"] -= inputAmount
-
-
+			bill[name] = createEntryList()
 		elif userInput == "p":
-			print("\nTOTAL BILL: $", round(totalBill))
-			print("---------------------")
+			print("\nTOTAL BILL: $", round(totalBill, 2))
+			print("-----------------------------------")
 			for x in bill.items():
-				print(x[0], ": $", round(x[1]))
+				print(x[0])
+				for item in x[1]:
+					print("  ", item[0], " - $", item[1])
 
 		elif userInput == "r":
 			print()
@@ -44,6 +31,32 @@ def main():
 			# bill[name] = 
 
 
+def createEntryList():
+	entryList = []
+	inputPrice = 0
+	inputName = ""
+	while inputName != "exit":
+		wrongInput = False
+		# printMenu()
+		inputName = input("Enter New Entry(exit for quit): ")
+
+		if inputName == "exit" :
+			continue
+
+		inputPrice = input("Price: ")
+
+		for c in inputPrice:
+			if c.isdigit() == False and c != ".":
+				wrongInput = True
+
+		if wrongInput == True:
+			print("\n WRONG INPUT")
+			continue
+
+		inputPrice = float(inputPrice)
+		entryList.append((inputName, inputPrice))
+
+	return entryList.copy()
 
 
 

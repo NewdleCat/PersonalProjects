@@ -1,0 +1,23 @@
+body 
+{
+	background: #999;
+	font-family: arial;
+}
+
+h1, h2, h3
+{
+	color: #555;
+}
+
+p
+{
+	background: #666;
+	color: white;
+	padding: 10px;
+}
+
+.secondary
+{
+	background: none;
+	color: red;
+}
