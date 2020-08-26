@@ -63,7 +63,8 @@ function love.update(dt)
 
 	-- minionCollisions(dt)
 
-	-- print(angle)
+	print(player.moving)
+	-- print(player.direction)
 
 
 	angle = angle + dt
@@ -78,8 +79,8 @@ function love.draw()
 	love.graphics.push()
 	love.graphics.translate(cameraX, cameraY)
 
-	love.graphics.setColor(0, 0, 0)
-	love.graphics.line(player.x, player.y, dx * 10, dy * 10)
+	-- love.graphics.setColor(0, 0, 0)
+	-- love.graphics.line(player.x, player.y, dx * 10, dy * 10)
 
 	love.graphics.setColor(0, 1, 0)
 	love.graphics.rectangle("fill", -200, -200, 1000, 1000, 10, 10)
@@ -166,7 +167,7 @@ function newMinion(x, y)
 	local self = {}
 	self.x = x
 	self.y = y
-	self.radius = 25
+	self.radius = 15
 	self.color = {1, 0, 0}
 	self.speed = 200
 	self.angle = 0
@@ -177,33 +178,58 @@ function newMinion(x, y)
 	self.tx = 0
 	self.ty = 0
 
+	self.idleImage = love.graphics.newImage("skeletonIdle.png")
+	self.walkAnimation = newAnimation(love.graphics.newImage("skeleton.png"), 45, 64, 1)
+	self.horizontalDirection = 1
+
 	self.update = function(dt)
 		self.angle = math.atan2((player.y - self.y), (player.x - self.x))
 		self.dx = self.speed * math.cos(self.angle)
 		self.dy = self.speed * math.sin(self.angle)
 
+		if dx < 0 then
+			self.horizontalDirection = 1
+		elseif dx > 0 then
+			self.horizontalDirection = -1
+		end
+
 		if distance(self.x, self.y, player.x, player.y) >= self.maxDistance then
 			self.x = self.x + (dt * self.dx)
 			self.y = self.y + (dt * self.dy)
-		-- 	moving = true
-		-- else
-		-- 	moving = false
+			moving = true
+		else
+			moving = false
 		end
 
 		minionCollisions(self, dt)
 
+		self.walkAnimation.currentTime = self.walkAnimation.currentTime + dt
+	    if self.walkAnimation.currentTime >= self.walkAnimation.duration then
+	       	self.walkAnimation.currentTime = self.walkAnimation.currentTime - self.walkAnimation.duration
+	    end
+
 	end
 
 	self.draw = function(self)
-		love.graphics.setColor(0, 0, 1)
-		love.graphics.circle("fill", self.x, self.y, self.radius)
-		love.graphics.print("nono u sexy", self.x - 25, self.y - 40)
+		-- love.graphics.setColor(0, 0, 1)
+		-- love.graphics.circle("fill", self.x, self.y, self.radius)
+		-- love.graphics.print("nono u sexy", self.x - 25, self.y - 40)
 
-		love.graphics.setColor(0, 0, 0)
-		love.graphics.line(self.x, self.y, (self.dx * 10), (self.dy * 10))
+		-- love.graphics.setColor(0, 0, 0)
+		-- love.graphics.line(self.x, self.y, (self.dx * 10), (self.dy * 10))
 
-		love.graphics.setColor(1, 0, 0)
-		love.graphics.line(self.x, self.y, (self.tx * 10), (self.ty * 10))
+		-- love.graphics.setColor(1, 0, 0)
+		-- love.graphics.line(self.x, self.y, (self.tx * 10), (self.ty * 10))
+
+		love.graphics.setColor(1, 1, 1)
+
+		if moving then
+			local spriteNum = math.floor(self.walkAnimation.currentTime / self.walkAnimation.duration * #self.walkAnimation.quads) + 1
+		    love.graphics.draw(self.walkAnimation.spriteSheet, self.walkAnimation.quads[spriteNum], self.x - (45/2)*self.horizontalDirection, self.y - 64/2, 0, self.horizontalDirection, 1)
+		elseif not moving then
+			love.graphics.draw(self.idleImage, self.x - (45/2)*self.horizontalDirection, self.y - 64/2, 0, self.horizontalDirection, 1)
+		end
+
 	end
 
 	return self
