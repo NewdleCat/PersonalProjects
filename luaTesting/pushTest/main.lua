@@ -70,7 +70,7 @@ function love.load()
 			if (m.y + m.h/2) < (player.y - player.h/2) or not m.xRange or m.yStatus == "bottom" then
 				player.y = player.y - (dt * player.speed)
 				m.touching = ""
-			else
+			elseif m.touching == "" then
 				m.touching = "bottom"
 			end
 		end
@@ -78,7 +78,7 @@ function love.load()
 			if (m.x + m.w/2) < (player.x - player.w/2) or not m.yRange or m.xStatus == "right" then
 				player.x = player.x - (dt * player.speed)
 				m.touching = ""
-			else
+			elseif m.touching == "" then
 				m.touching = "right"
 			end
 		end
@@ -86,7 +86,7 @@ function love.load()
 			if (m.y - m.h/2) > (player.y + player.h/2) or not m.xRange or m.yStatus == "top" then
 				player.y = player.y + (dt * player.speed)
 				m.touching = ""
-			else
+			elseif m.touching == "" then
 				m.touching = "top"
 			end
 		end
@@ -94,9 +94,21 @@ function love.load()
 			if (m.x - m.w/2) > (player.x + player.w/2) or not m.yRange or m.xStatus == "left" then
 				player.x = player.x + (dt * player.speed)
 				m.touching = ""
-			else
+			elseif m.touching == "" then
 				m.touching = "left"
 			end
+
+			-- if distance(player.x + player.w/2, player.y - player.h/2, m.x - m.w/2, m.y - m.h/2) < m.dist then
+			-- 	print("1")
+			-- elseif distance(player.x + player.w/2, player.y + player.h/2, m.x - m.w/2, m.y + m.h/2) < m.dist then
+			-- 	print("2")
+			-- elseif distance(player.x + player.w/2, player.y - player.h/2, m.x - m.w/2, m.y + m.h/2) < m.dist then
+			-- 	print("3")
+			-- elseif distance(player.x + player.w/2, player.y + player.h/2, m.x - m.w/2, m.y - m.h/2) < m.dist then
+			-- 	print("4")
+			-- else
+			-- 	player.x = player.x + (dt * player.speed)
+			-- end
 		end
 
 		-- print(m.touching)
@@ -112,28 +124,28 @@ function love.load()
 		local m = player.m
 		-- love.graphics.line(player.x, player.y, m.x, m.y)
 		if m.xStatus == "right" then
-			if distance(player.x + player.w/2, player.y - player.h/2, m.x - m.w/2, m.y - m.h/2) < 20 then
+			if distance(player.x + player.w/2, player.y - player.h/2, m.x - m.w/2, m.y - m.h/2) < m.dist then
 				love.graphics.setColor(0, 1, 0)
 			else
 				love.graphics.setColor(1, 0, 0)
 			end
 			love.graphics.line(player.x + player.w/2, player.y - player.h/2, m.x - m.w/2, m.y - m.h/2)
 
-			if distance(player.x + player.w/2, player.y + player.h/2, m.x - m.w/2, m.y + m.h/2) < 20 then
+			if distance(player.x + player.w/2, player.y + player.h/2, m.x - m.w/2, m.y + m.h/2) < m.dist then
 				love.graphics.setColor(0, 1, 0)
 			else
 				love.graphics.setColor(1, 0, 0)
 			end
 			love.graphics.line(player.x + player.w/2, player.y + player.h/2, m.x - m.w/2, m.y + m.h/2)
 
-			if distance(player.x + player.w/2, player.y - player.h/2, m.x - m.w/2, m.y + m.h/2) < 20 then
+			if distance(player.x + player.w/2, player.y - player.h/2, m.x - m.w/2, m.y + m.h/2) < m.dist then
 				love.graphics.setColor(0, 1, 0)
 			else
 				love.graphics.setColor(1, 0, 0)
 			end
 			love.graphics.line(player.x + player.w/2, player.y - player.h/2, m.x - m.w/2, m.y + m.h/2)
 
-			if distance(player.x + player.w/2, player.y + player.h/2, m.x - m.w/2, m.y - m.h/2) < 20 then
+			if distance(player.x + player.w/2, player.y + player.h/2, m.x - m.w/2, m.y - m.h/2) < m.dist then
 				love.graphics.setColor(0, 1, 0)
 			else
 				love.graphics.setColor(1, 0, 0)
@@ -182,6 +194,7 @@ function newMinion(x, y)
 	self.xStatus = ""
 	self.touching = ""
 	self.coordList = {}
+	self.dist = 20
 
 	local function newCoords(x, y)
 		local coord = {}
@@ -212,6 +225,31 @@ function newMinion(x, y)
 		-- 	updateCoords(self)
 		-- end
 
+		local tempList = {}
+		local distanceList = {}
+		for i,v in pairs(minionList) do
+			if self.x ~= v.x or self.y ~= v.y then
+				table.insert(tempList, v)
+				table.insert(distanceList, distance(self.x, self.y, v.x, v.y))
+			end
+		end
+
+		local min = 0
+		local minIndex = 1
+		local count = 0
+		for i,v in pairs(distanceList) do
+			count = count + 1
+			if min == 0 or min > v then
+				min = v
+				minIndex = count
+			end
+		end
+
+		local m = tempList[minIndex]
+
+		
+
+
 		if self.touching == "bottom" and love.keyboard.isDown("w") then
 			self.y = self.y - (dt * player.speed)
 		elseif self.touching == "right" and love.keyboard.isDown("a") then
@@ -221,6 +259,8 @@ function newMinion(x, y)
 		elseif self.touching == "left" and love.keyboard.isDown("d") then
 			self.x = self.x + (dt * player.speed)
 		end
+
+
 	end
 
 	self.draw = function()

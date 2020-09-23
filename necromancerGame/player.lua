@@ -104,10 +104,19 @@ end
 player.draw = function(self)
 
 	love.graphics.setColor(1, 1, 1)
-	if player.moving == true then
-		local spriteNum = math.floor(animation.currentTime / animation.duration * #animation.quads) + 1
-	    love.graphics.draw(animation.spriteSheet, animation.quads[spriteNum], player.x - (player.width/2)*player.directionHorizontal, player.y - player.height/2, 0, player.directionHorizontal, 1)
-	elseif player.moving == false then
-		love.graphics.rectangle("fill", player.x - player.width/2, player.y - player.height/2, player.width, player.height)
-	end
+	-- UNCOMMENT LATER
+	-- if player.moving == true then
+	-- 	local spriteNum = math.floor(animation.currentTime / animation.duration * #animation.quads) + 1
+	--     love.graphics.draw(animation.spriteSheet, animation.quads[spriteNum], player.x - (player.width/2)*player.directionHorizontal, player.y - player.height/2, 0, player.directionHorizontal, 1)
+	-- elseif player.moving == false then
+	-- 	love.graphics.rectangle("fill", player.x - player.width/2, player.y - player.height/2, player.width, player.height)
+	-- end
+
+	-- love.graphics.rectangle("fill", player.x - player.width/2, player.y - player.height/2, player.width, player.height)
+	local spriteNum = math.floor(animation.currentTime / animation.duration * #animation.quads) + 1
+	love.graphics.draw(animation.spriteSheet, animation.quads[spriteNum], player.x - (player.width/2)*player.directionHorizontal, player.y - player.height/2, 0, player.directionHorizontal, 1)
+
+
+	love.graphics.setColor(1, 0, 0)
+	love.graphics.circle("line", player.x, player.y, 100)
 end

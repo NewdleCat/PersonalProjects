@@ -5,6 +5,8 @@ require "anim"
 function love.load()
 	love.window.setMode(1280, 1024)
 
+	attackImage = love.graphics.newImage("test.png")
+
 
 	attackList = {}
 	enemyList = {}
@@ -73,7 +75,8 @@ function love.update(dt)
 end
 
 function love.draw()
-	love.graphics.setBackgroundColor(1, 1, 1)
+	-- love.graphics.setBackgroundColor(1, 1, 1)
+	love.graphics.setBackgroundColor(0, 0, 0)
 
 
 	love.graphics.push()
@@ -167,7 +170,7 @@ function newMinion(x, y)
 	local self = {}
 	self.x = x
 	self.y = y
-	self.radius = 15
+	self.radius = 20
 	self.color = {1, 0, 0}
 	self.speed = 200
 	self.angle = 0
@@ -187,9 +190,9 @@ function newMinion(x, y)
 		self.dx = self.speed * math.cos(self.angle)
 		self.dy = self.speed * math.sin(self.angle)
 
-		if dx < 0 then
+		if self.x - player.x < 0 then
 			self.horizontalDirection = 1
-		elseif dx > 0 then
+		elseif self.x - player.x > 0 then
 			self.horizontalDirection = -1
 		end
 
@@ -211,8 +214,8 @@ function newMinion(x, y)
 	end
 
 	self.draw = function(self)
-		-- love.graphics.setColor(0, 0, 1)
-		-- love.graphics.circle("fill", self.x, self.y, self.radius)
+		love.graphics.setColor(0, 0, 1)
+		-- love.graphics.circle("line", self.x, self.y, self.radius)
 		-- love.graphics.print("nono u sexy", self.x - 25, self.y - 40)
 
 		-- love.graphics.setColor(0, 0, 0)
@@ -240,7 +243,7 @@ function minionCollisions(curr, dt)
 
 	for _,v in pairs(minionList) do
 		if curr.x ~= v.x and curr.y ~= v.y then
-			if distance(curr.x, curr.y, v.x, v.y) < 50 then
+			if distance(curr.x, curr.y, v.x, v.y) < curr.radius*2 then
 				-- print("Minon Collisiosn!!!")
 
 				local angle = math.atan2((v.y - curr.y), (v.x - curr.x))
@@ -293,7 +296,8 @@ function newAttack(destX, destY)
 	end
 
 	self.draw = function(self)
-		love.graphics.circle("fill", self.x, self.y, 10)
+		-- love.graphics.circle("fill", self.x, self.y, 10)
+		love.graphics.draw(attackImage, self.x, self.y, self.angle + 1.6)
 	end
 
 	return self

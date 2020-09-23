@@ -34,4 +34,7 @@ function love.draw()
 	love.graphics.setColor(1, 0, 0)
 	love.graphics.rectangle("fill", 140, 100, 5 * health, 10)
 
+	love.graphics.setColor(1, 1, 1)
+	love.graphics.rectangle("fill", 100, 300, 50, 50)
+
 end
