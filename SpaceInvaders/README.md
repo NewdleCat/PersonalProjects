@@ -1,5 +1,3 @@
-My first project with lua and love2D engine
+The files have been moved to a new repository:
 
-I am currently watching a youtube series in order to learn the basics or the engine
-
-https://www.youtube.com/watch?v=FUiz1kL0QtI&t=225s
+https://github.com/NewdleCat/SpaceInvaders-Clone
