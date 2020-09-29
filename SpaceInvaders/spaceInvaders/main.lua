@@ -5,25 +5,6 @@ require "player"
 love.graphics.setDefaultFilter('nearest', 'nearest')
 
 ------------------------------------------------------------------------------------
---                          OTHER STUFF
-------------------------------------------------------------------------------------
-function lerp(a,b,t) 
-    return a * (1-t) + b * t 
-end
-
-function quadin(a, b, t) 
-    return lerp(a, b, t * t) 
-end
-
-function quad_in_out(a, b, t)
-    if t <= 0.5 then
-        return quadin(a, b, t*2) - (b-a)/2 -- scale by 2/0.5
-    else
-        return quadin(a, b, (1 - t)*2) + (b-a)/2 -- reverse and offset by 0.5
-    end
-end
-
-------------------------------------------------------------------------------------
 --                          COLLISIONS
 ------------------------------------------------------------------------------------
 
